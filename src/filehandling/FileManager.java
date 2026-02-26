@@ -1,6 +1,8 @@
 package filehandling;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 public class FileManager {
 
@@ -18,22 +20,36 @@ public class FileManager {
         this.pieceSize = pieceSize;
         this.numberOfPieces = numberOfPieces;
         this.peerDirectory = "peer_" + peerId;
+        new File(peerDirectory).mkdirs();
     }
 
-    public byte[] readPiece(int pieceIndex) throws IOException {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized byte[] readPiece(int pieceIndex) throws IOException {
+        int size = getPieceSizeForIndex(pieceIndex);
+        byte[] data = new byte[size];
+        try (RandomAccessFile raf = new RandomAccessFile(peerDirectory + File.separator + fileName, "r")) {
+            raf.seek((long) pieceIndex * pieceSize);
+            raf.readFully(data);
+        }
+        return data;
     }
 
-    public void writePiece(int pieceIndex, byte[] data) throws IOException {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized void writePiece(int pieceIndex, byte[] data) throws IOException {
+        File file = new File(peerDirectory + File.separator + fileName);
+        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+            raf.seek((long) pieceIndex * pieceSize);
+            raf.write(data);
+        }
     }
 
-    public void assembleFile() throws IOException {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized void assembleFile() throws IOException {
     }
 
     public int getPieceSizeForIndex(int pieceIndex) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        if (pieceIndex == numberOfPieces - 1) {
+            int remainder = (int) (fileSize % pieceSize);
+            return remainder == 0 ? pieceSize : remainder;
+        }
+        return pieceSize;
     }
 
     public String getPeerDirectory() {

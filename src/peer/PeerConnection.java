@@ -1,5 +1,7 @@
 package peer;
 
+import message.Message;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -8,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class PeerConnection {
 
-    private final int remotePeerId;
+    private int remotePeerId;
     private final Socket socket;
     private final DataInputStream in;
     private final DataOutputStream out;
@@ -17,6 +19,7 @@ public class PeerConnection {
     private volatile boolean remoteChoked;
     private volatile boolean remoteInterested;
     private final AtomicLong bytesDownloadedFromPeer;
+    private final Object sendLock = new Object();
 
     public PeerConnection(int remotePeerId, Socket socket) throws IOException {
         this.remotePeerId = remotePeerId;
@@ -34,8 +37,22 @@ public class PeerConnection {
         return remotePeerId;
     }
 
+    public void setRemotePeerId(int remotePeerId) {
+        this.remotePeerId = remotePeerId;
+    }
+
     public Socket getSocket() {
         return socket;
+    }
+
+    public void sendMessage(Message message) throws IOException {
+        synchronized (sendLock) {
+            message.send(out);
+        }
+    }
+
+    public Message receiveMessage() throws IOException {
+        return Message.receive(in);
     }
 
     public DataInputStream getInputStream() {

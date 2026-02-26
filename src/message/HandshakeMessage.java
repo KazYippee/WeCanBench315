@@ -23,10 +23,23 @@ public class HandshakeMessage {
     }
 
     public void send(DataOutputStream out) throws IOException {
-        throw new UnsupportedOperationException("Not yet implemented");
+        byte[] headerBytes = HEADER.getBytes(StandardCharsets.UTF_8);
+        out.write(headerBytes);
+        out.write(new byte[ZERO_BITS_LENGTH]);
+        out.writeInt(peerId);
+        out.flush();
     }
 
     public static HandshakeMessage receive(DataInputStream in) throws IOException {
-        throw new UnsupportedOperationException("Not yet implemented");
+        byte[] headerBytes = new byte[18];
+        in.readFully(headerBytes);
+        String header = new String(headerBytes, StandardCharsets.UTF_8);
+        if (!HEADER.equals(header)) {
+            throw new IOException("Invalid handshake header: " + header);
+        }
+        byte[] zeroBits = new byte[ZERO_BITS_LENGTH];
+        in.readFully(zeroBits);
+        int peerId = in.readInt();
+        return new HandshakeMessage(peerId);
     }
 }

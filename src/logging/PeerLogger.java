@@ -22,52 +22,63 @@ public class PeerLogger {
         return "[" + LocalDateTime.now().format(FORMATTER) + "]";
     }
 
-    private void write(String message) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    private synchronized void write(String message) {
+        try {
+            writer.write(timestamp() + " " + message);
+            writer.newLine();
+            writer.flush();
+        } catch (IOException e) {
+            System.err.println("Logger error: " + e.getMessage());
+        }
     }
 
     public void logTCPConnectionTo(int remotePeerId) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " makes a connection to Peer " + remotePeerId + ".");
     }
 
     public void logTCPConnectionFrom(int remotePeerId) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " is connected from Peer " + remotePeerId + ".");
     }
 
     public void logPreferredNeighbors(List<Integer> neighborIds) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < neighborIds.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(neighborIds.get(i));
+        }
+        write("Peer " + localPeerId + " has the preferred neighbors [" + sb + "].");
     }
 
     public void logOptimisticallyUnchokedNeighbor(int neighborId) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " has the optimistically unchoked neighbor " + neighborId + ".");
     }
 
     public void logUnchoked(int byPeerId) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " is unchoked by " + byPeerId + ".");
     }
 
     public void logChoked(int byPeerId) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " is choked by " + byPeerId + ".");
     }
 
     public void logHaveMessage(int fromPeerId, int pieceIndex) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " received the 'have' message from " + fromPeerId + " for the piece " + pieceIndex + ".");
     }
 
     public void logInterestedMessage(int fromPeerId) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " received the 'interested' message from " + fromPeerId + ".");
     }
 
     public void logNotInterestedMessage(int fromPeerId) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " received the 'not interested' message from " + fromPeerId + ".");
     }
 
     public void logDownloadedPiece(int pieceIndex, int fromPeerId, int totalPieces) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " has downloaded the piece " + pieceIndex + " from " + fromPeerId + ". Now the number of pieces it has is " + totalPieces + ".");
     }
 
     public void logCompletedDownload() {
-        throw new UnsupportedOperationException("Not yet implemented");
+        write("Peer " + localPeerId + " has downloaded the complete file.");
     }
 
     public void close() throws IOException {

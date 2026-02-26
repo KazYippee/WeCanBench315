@@ -24,23 +24,29 @@ public class BitField {
         this.bits = rawBits.clone();
     }
 
-    public void setPiece(int index) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized void setPiece(int index) {
+        bits[index / 8] |= (byte) (0x80 >>> (index % 8));
     }
 
-    public boolean hasPiece(int index) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized boolean hasPiece(int index) {
+        return (bits[index / 8] & (0x80 >>> (index % 8))) != 0;
     }
 
-    public boolean isComplete() {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized boolean isComplete() {
+        for (int i = 0; i < numberOfPieces; i++) {
+            if (!hasPiece(i)) return false;
+        }
+        return true;
     }
 
-    public boolean hasInterestingPiece(BitField other) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized boolean hasInterestingPiece(BitField other) {
+        for (int i = 0; i < numberOfPieces; i++) {
+            if (other.hasPiece(i) && !hasPiece(i)) return true;
+        }
+        return false;
     }
 
-    public byte[] getBytes() {
+    public synchronized byte[] getBytes() {
         return bits.clone();
     }
 
@@ -48,7 +54,11 @@ public class BitField {
         return numberOfPieces;
     }
 
-    public int getPieceCount() {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized int getPieceCount() {
+        int count = 0;
+        for (int i = 0; i < numberOfPieces; i++) {
+            if (hasPiece(i)) count++;
+        }
+        return count;
     }
 }

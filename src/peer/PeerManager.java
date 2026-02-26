@@ -1,10 +1,12 @@
 package peer;
 
 import config.CommonConfig;
-import config.PeerInfo;
 import config.PeerInfoConfig;
+import filehandling.FileManager;
+import logging.PeerLogger;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PeerManager {
@@ -13,7 +15,10 @@ public class PeerManager {
     private final BitField localBitField;
     private final Map<Integer, PeerConnection> connections;
     private final Map<Integer, BitField> neighborBitFields;
+    private final Set<Integer> requestedPieces;
     private volatile boolean allPeersFinished;
+    private FileManager fileManager;
+    private PeerLogger logger;
 
     public PeerManager(int localPeerId, boolean hasFile) {
         this.localPeerId = localPeerId;
@@ -21,11 +26,27 @@ public class PeerManager {
         this.localBitField = new BitField(numPieces, hasFile);
         this.connections = new ConcurrentHashMap<>();
         this.neighborBitFields = new ConcurrentHashMap<>();
+        this.requestedPieces = ConcurrentHashMap.newKeySet();
         this.allPeersFinished = false;
     }
 
+    public void setFileManager(FileManager fileManager) {
+        this.fileManager = fileManager;
+    }
+
+    public void setLogger(PeerLogger logger) {
+        this.logger = logger;
+    }
+
+    public FileManager getFileManager() {
+        return fileManager;
+    }
+
+    public PeerLogger getLogger() {
+        return logger;
+    }
+
     public void start() {
-        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     public void addConnection(int remotePeerId, PeerConnection connection) {
@@ -37,12 +58,34 @@ public class PeerManager {
         neighborBitFields.put(remotePeerId, bitField);
     }
 
-    public void setNeighborHasPiece(int remotePeerId, int pieceIndex) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized void setNeighborHasPiece(int remotePeerId, int pieceIndex) {
+        BitField bf = neighborBitFields.get(remotePeerId);
+        if (bf != null) {
+            bf.setPiece(pieceIndex);
+        }
     }
 
-    public boolean checkAllFinished() {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public synchronized boolean checkAllFinished() {
+        if (!localBitField.isComplete()) return false;
+        for (BitField bf : neighborBitFields.values()) {
+            if (!bf.isComplete()) return false;
+        }
+        int totalPeers = PeerInfoConfig.getInstance().getPeers().size();
+        if (neighborBitFields.size() < totalPeers - 1) return false;
+        allPeersFinished = true;
+        return true;
+    }
+
+    public boolean addRequestedPiece(int pieceIndex) {
+        return requestedPieces.add(pieceIndex);
+    }
+
+    public void removeRequestedPiece(int pieceIndex) {
+        requestedPieces.remove(pieceIndex);
+    }
+
+    public boolean isRequested(int pieceIndex) {
+        return requestedPieces.contains(pieceIndex);
     }
 
     public int getLocalPeerId() {

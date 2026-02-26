@@ -21,10 +21,33 @@ public class ConnectionListener implements Runnable {
 
     @Override
     public void run() {
-        throw new UnsupportedOperationException("Not yet implemented");
+        try {
+            serverSocket = new ServerSocket(port);
+            while (!serverSocket.isClosed() && !peerManager.isAllPeersFinished()) {
+                try {
+                    Socket socket = serverSocket.accept();
+                    Thread handler = new Thread(new ConnectionHandler(socket, localPeerId, peerManager, false));
+                    handler.setDaemon(true);
+                    handler.start();
+                } catch (IOException e) {
+                    if (!serverSocket.isClosed()) {
+                        System.err.println("Accept error: " + e.getMessage());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Cannot bind server socket on port " + port + ": " + e.getMessage());
+        } finally {
+            stop();
+        }
     }
 
-    public void stop() throws IOException {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public void stop() {
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            try {
+                serverSocket.close();
+            } catch (IOException ignored) {
+            }
+        }
     }
 }
